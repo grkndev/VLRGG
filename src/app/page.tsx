@@ -1,101 +1,232 @@
+"use client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import Image from "next/image";
+import React from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+type Match = {
+  unix_timestamp: string;
+  team1: string;
+  team2: string;
+  score1: string;
+  score2: string;
+};
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [upcomingMatches, setUpcomingMatches] = React.useState<any[]>([]);
+  const [liveMatches, setLiveMatches] = React.useState<any[]>([]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  React.useEffect(() => {
+    fetch("/api/upcoming")
+      .then((res) => res.json())
+      .then((data) => {
+        setUpcomingMatches(data);
+      });
+  }, []);
+
+  React.useEffect(() => {
+    fetch("/api/live")
+      .then((res) => res.json())
+      .then((data) => {
+        setLiveMatches(data);
+      });
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center justify-center space-y-4 p-4">
+      <Tabs defaultValue="upcoming" className="w-full">
+        <TabsList className="w-full bg-[#1e1e1e]">
+          <TabsTrigger
+            value="upcoming"
+            className="text-white w-full data-[state=active]:text-white data-[state=active]:bg-[#3E3E3E]"
           >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Upcoming
+          </TabsTrigger>
+          <TabsTrigger
+            value="live"
+            className="text-white w-full data-[state=active]:text-white data-[state=active]:bg-[#3E3E3E]"
           >
-            Read our docs
-          </a>
+            Live
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="upcoming">
+          <MatchList matches={upcomingMatches} />
+        </TabsContent>
+        <TabsContent value="live">
+          <MatchList matches={liveMatches} isLive={true} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+function MatchList({ matches, isLive }: { matches: any[]; isLive?: boolean }) {
+  return (
+    <div className="flex flex-wrap sm:flex-row items-center justify-center gap-4 w-full">
+      {matches &&
+        matches.map((event) => (
+          <Card
+            className={`bg-transparent border-2 text-white w-full sm:w-1/2 ${
+              isLive ? "border-red-500" : "border-[#3E3E3E]"
+            }`}
+          >
+            <div className="flex flex-col items-center justify-center space-y-4 h-full py-4">
+              <div className="flex flex-row items-center justify-center space-x-2 p-4">
+                <Image
+                  src="https://owcdn.net/img/604be13d01964.png"
+                  alt="logo"
+                  width={200}
+                  height={200}
+                  className="w-6 h-6"
+                />
+                <span className="text-sm">{event.event}</span>
+              </div>
+
+              <ScrollArea className="flex items-center justify-center w-full h-fit">
+                <div className="flex flex-col items-center justify-center space-y-2 w-full">
+                  {event.matches.map((match: any) => (
+                    <div
+                      className="w-full items-center justify-center"
+                      key={match.unix_timestamp}
+                    >
+                      <Separator
+                        dateString={isLive ? "LIVE" : match.unix_timestamp}
+                      />
+                      <Match
+                        type={"upcoming"}
+                        team1={match.team1}
+                        team2={match.team2}
+                        score1={match.score1}
+                        score2={match.score2}
+                        isLive={isLive}
+                        current_map={match.current_map}
+                        match_series={match.match_series}
+                        team1_round_ct={match.team1_round_ct}
+                        team1_round_t={match.team1_round_t}
+                        team2_round_ct={match.team2_round_ct}
+                        team2_round_t={match.team2_round_t}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          </Card>
+        ))}
+    </div>
+  );
+}
+
+function Separator({ dateString }: { dateString: string }) {
+  return (
+    <div className="flex flex-row items-center justify-center space-x-2 w-full">
+      <div
+        className={`w-full h-[2px] bg-[#3E3E3E] ${
+          dateString === "LIVE" ? "bg-red-500" : ""
+        }`}
+      />
+      <span
+        className={`text-sm text-[#3E3E3E] font-semibold text-nowrap ${
+          dateString === "LIVE" ? "text-red-500" : ""
+        }`}
+      >
+        {dateString}
+      </span>
+      <div
+        className={`w-full h-[2px] bg-[#3E3E3E] ${
+          dateString === "LIVE" ? "bg-red-500" : ""
+        }`}
+      />
+    </div>
+  );
+}
+function Match({
+  type,
+  team1,
+  team2,
+  score1,
+  score2,
+  isLive,
+  current_map,
+  match_series,
+  team1_round_ct,
+  team1_round_t,
+  team2_round_ct,
+  team2_round_t,
+}: {
+  type: "upcoming" | "live" | "finished";
+  team1: string;
+  team2: string;
+  score1: string;
+  score2: string;
+  isLive?: boolean;
+  current_map?: string;
+  match_series?: string;
+  team1_round_ct?: string;
+  team1_round_t?: string;
+  team2_round_ct?: string;
+  team2_round_t?: string;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-between space-y-2 w-full px-4 py-2">
+      <div className="flex flex-row items-center justify-between space-x-2 w-full ">
+        <div className="flex flex-row items-center justify-center space-x-2">
+          <Image
+            src="https://owcdn.net/img/604be13d01964.png"
+            alt="logo"
+            width={200}
+            height={200}
+            className="w-6 h-6"
+          />
+          <span className="text-base font-semibold">{team1}</span>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        {isLive && (
+          <div className="flex flex-row items-center justify-center space-x-2">
+            <span className="text-sm text-white/20">
+              (
+              {Number(team1_round_ct == "N/A" ? 0 : team1_round_ct) +
+                Number(team1_round_t == "N/A" ? 0 : team1_round_t)}
+              )
+            </span>
+            <div className="w-8 h-8 flex flex-row items-center justify-center space-x-2 bg-[#3E3E3E] p-2 rounded-md">
+              <span className="text-sm font-semibold">{score1}</span>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="flex flex-row items-center justify-between space-x-2 w-full">
+        <div className="flex flex-row items-center justify-center space-x-2">
           <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+            src="https://owcdn.net/img/604be13d01964.png"
+            alt="logo"
+            width={200}
+            height={200}
+            className="w-6 h-6"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+          <span className="text-base font-semibold">{team2}</span>
+        </div>
+        {isLive && (
+          <div className="flex flex-row items-center justify-center space-x-2">
+            <span className="text-sm text-white/20">
+              (
+              {Number(team2_round_ct == "N/A" ? 0 : team2_round_ct) +
+                Number(team2_round_t == "N/A" ? 0 : team2_round_t)}
+              )
+            </span>
+            <div className="w-8 h-8 flex flex-row items-center justify-center space-x-2 bg-[#3E3E3E] p-2 rounded-md">
+              <span className="text-sm font-semibold">{score2}</span>
+            </div>
+          </div>
+        )}
+      </div>
+      {isLive && (
+        <div className="flex flex-row items-center justify-between space-x-2 w-full mt-2">
+          <span className="text-sm text-white/20">{match_series}</span>
+          <span className="text-sm text-white/20">
+            Current Map: {current_map}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
