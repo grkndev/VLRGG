@@ -1,5 +1,5 @@
 "use client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Image from "next/image";
 import React from "react";
@@ -11,10 +11,20 @@ type Match = {
   team2: string;
   score1: string;
   score2: string;
+  current_map?: string;
+  match_series?: string;
+  team1_round_ct?: string;
+  team1_round_t?: string;
+  team2_round_ct?: string;
+  team2_round_t?: string;
 };
 export default function Home() {
-  const [upcomingMatches, setUpcomingMatches] = React.useState<any[]>([]);
-  const [liveMatches, setLiveMatches] = React.useState<any[]>([]);
+  const [upcomingMatches, setUpcomingMatches] = React.useState<
+    { event: string; matches: Match[] }[]
+  >([]);
+  const [liveMatches, setLiveMatches] = React.useState<
+    { event: string; matches: Match[] }[]
+  >([]);
 
   React.useEffect(() => {
     fetch("/api/upcoming")
@@ -59,12 +69,19 @@ export default function Home() {
     </div>
   );
 }
-function MatchList({ matches, isLive }: { matches: any[]; isLive?: boolean }) {
+function MatchList({
+  matches,
+  isLive,
+}: {
+  matches: { event: string; matches: Match[] }[];
+  isLive?: boolean;
+}) {
   return (
     <div className="flex flex-wrap sm:flex-row items-center justify-center gap-4 w-full">
       {matches &&
         matches.map((event) => (
           <Card
+            key={event.event}
             className={`bg-transparent border-2 text-white w-full sm:w-1/2 ${
               isLive ? "border-red-500" : "border-[#3E3E3E]"
             }`}
@@ -83,7 +100,7 @@ function MatchList({ matches, isLive }: { matches: any[]; isLive?: boolean }) {
 
               <ScrollArea className="flex items-center justify-center w-full h-fit">
                 <div className="flex flex-col items-center justify-center space-y-2 w-full">
-                  {event.matches.map((match: any) => (
+                  {event.matches.map((match: Match) => (
                     <div
                       className="w-full items-center justify-center"
                       key={match.unix_timestamp}
@@ -140,7 +157,6 @@ function Separator({ dateString }: { dateString: string }) {
   );
 }
 function Match({
-  type,
   team1,
   team2,
   score1,
