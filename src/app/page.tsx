@@ -4,6 +4,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import Image from "next/image";
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 
 type Match = {
   unix_timestamp: string;
@@ -77,16 +79,16 @@ function MatchList({
   isLive?: boolean;
 }) {
   return (
-    <div className="flex flex-wrap sm:flex-row items-center justify-center gap-4 w-full">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 items-center justify-center gap-4 w-full">
       {matches &&
         matches.map((event) => (
           <Card
             key={event.event}
-            className={`bg-transparent border-2 text-white w-full sm:w-1/2 ${
+            className={`bg-transparent border-2 text-white w-full h-full ${
               isLive ? "border-red-500" : "border-[#3E3E3E]"
             }`}
           >
-            <div className="flex flex-col items-center justify-center space-y-4 h-full py-4">
+            <div className="flex flex-col items-center justify-start space-y-4 h-full py-4">
               <div className="flex flex-row items-center justify-center space-x-2 p-4">
                 <Image
                   src="https://owcdn.net/img/604be13d01964.png"
@@ -134,6 +136,7 @@ function MatchList({
 }
 
 function Separator({ dateString }: { dateString: string }) {
+  const isToday = dayjs(dateString).isSame(dayjs(), "day");
   return (
     <div className="flex flex-row items-center justify-center space-x-2 w-full">
       <div
@@ -146,7 +149,7 @@ function Separator({ dateString }: { dateString: string }) {
           dateString === "LIVE" ? "text-red-500" : ""
         }`}
       >
-        {dateString}
+        {dayjs(dateString).add(3, "hours").format(isToday?"HH:mm [Today]":"HH:mm DD/MM/YYYY")} GMT+3
       </span>
       <div
         className={`w-full h-[2px] bg-[#3E3E3E] ${
