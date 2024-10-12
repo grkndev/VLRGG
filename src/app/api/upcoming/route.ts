@@ -1,4 +1,3 @@
-import { getTeam } from "@/lib/getTeam";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 

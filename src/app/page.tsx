@@ -2,10 +2,9 @@
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Image from "next/image";
-import React, { Suspense } from "react";
+import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import dayjs from "dayjs";
-import { Skeleton } from "@/components/ui/skeleton";
 
 type Match = {
   unix_timestamp: string;
