@@ -17,19 +17,6 @@ interface EventGroup {
   }[];
 }
 
-interface MatchItem {
-  match_event: string;
-  unix_timestamp: string;
-  team1: string;
-  team1_flag: string;
-  team2: string;
-  team2_flag: string;
-  score1: string;
-  score2: string;
-  current_map: string;
-  match_series: string;
-}
-
 export async function GET() {
   revalidatePath("/api/upcoming");
   const res = await fetch("https://vlrggapi.vercel.app/match?q=upcoming");
@@ -51,17 +38,18 @@ export async function GET() {
     }
 
     // getTeam fonksiyonlarını çağır ve sonuçları bekle
-    const [team1icon, team2icon] = await Promise.all([
-      new Promise<string>((resolve) => getTeam(item.team1, resolve)),
-      new Promise<string>((resolve) => getTeam(item.team2, resolve)),
-    ]);
+    // const [team1icon, team2icon] = await Promise.all([
+    //   new Promise<string>((resolve) => getTeam(item.team1, resolve)),
+    //   new Promise<string>((resolve) => getTeam(item.team2, resolve)),
+    // ]);
 
     // Bu event grubuna maçı ekle
-    eventGroup.matches.push({
-      ...item,
-      team1_flag: team1icon,
-      team2_flag: team2icon,
-    });
+    // eventGroup.matches.push({
+    //   ...item,
+    //   team1_flag: team1icon,
+    //   team2_flag: team2icon,
+    // });
+    eventGroup.matches.push(item);
   }
 
   return NextResponse.json(groupedData);

@@ -1,35 +1,15 @@
+import { getTeam } from "@/lib/getTeam";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-export async function GET() {
-  revalidatePath("/api/live");
-  const res = await fetch("https://vlrggapi.vercel.app/match?q=live_score");
-  const { data } = await res.json();
-  const newData = data.segments;
-
-  // Verileri event adlarına göre gruplamak ve {event:"", matches:[]} yapısına dönüştürmek
-  interface EventGroup {
-    event: string;
-    matches: {
-      unix_timestamp: string;
-      team1: string;
-      team2: string;
-      score1: string;
-      score2: string;
-      current_map: string;
-      match_series: string;
-      team1_round_ct: string;
-      team1_round_t: string;
-      team2_round_ct: string;
-      team2_round_t: string;
-    }[];
-  }
-
-  const groupedData = newData.reduce((acc: EventGroup[], item: {
-    match_event: string;
+interface EventGroup {
+  event: string;
+  matches: {
     unix_timestamp: string;
     team1: string;
     team2: string;
+    // team1_flag: string;
+    // team2_flag: string;
     score1: string;
     score2: string;
     current_map: string;
@@ -38,20 +18,41 @@ export async function GET() {
     team1_round_t: string;
     team2_round_ct: string;
     team2_round_t: string;
-  }) => {
-    const event = item.match_event;
-    let eventGroup = acc.find((group: EventGroup) => group.event === event);
+  }[];
+}
+export async function GET() {
+  revalidatePath("/api/live");
+  const res = await fetch("https://vlrggapi.vercel.app/match?q=live_score");
+  const { data } = await res.json();
+  const newData = data.segments;
 
+  const groupedData: EventGroup[] = [];
+
+  for (const item of newData) {
+    const event = item.match_event;
+
+    // Daha önce bu event var mı kontrol et
+    let eventGroup = groupedData.find((group) => group.event === event);
+
+    // Eğer event daha önce eklenmediyse, yeni bir event grubu oluştur
     if (!eventGroup) {
       eventGroup = { event: event, matches: [] };
-      acc.push(eventGroup);
+      groupedData.push(eventGroup);
     }
 
-    // Only push the required properties
+    // getTeam fonksiyonlarını çağır ve sonuçları bekle
+    // const [team1icon, team2icon] = await Promise.all([
+    //   new Promise<string>((resolve) => getTeam(item.team1, resolve)),
+    //   new Promise<string>((resolve) => getTeam(item.team2, resolve)),
+    // ]);
+
+    // Bu event grubuna maçı ekle
     eventGroup.matches.push({
       unix_timestamp: item.unix_timestamp,
       team1: item.team1,
       team2: item.team2,
+      // team1_flag: team1icon,
+      // team2_flag: team2icon,
       score1: item.score1,
       score2: item.score2,
       current_map: item.current_map,
@@ -61,9 +62,7 @@ export async function GET() {
       team2_round_ct: item.team2_round_ct,
       team2_round_t: item.team2_round_t,
     });
-
-    return acc;
-  }, [] as EventGroup[]);
+  }
 
   return NextResponse.json(groupedData);
 }

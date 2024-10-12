@@ -2,10 +2,10 @@
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Image from "next/image";
-import React from "react";
+import React, { Suspense } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Match = {
   unix_timestamp: string;
@@ -13,8 +13,8 @@ type Match = {
   team2: string;
   score1: string;
   score2: string;
-  team1_flag: string;
-  team2_flag: string;
+  // team1_flag: string;
+  // team2_flag: string;
   current_map?: string;
   match_series?: string;
   team1_round_ct?: string;
@@ -24,17 +24,17 @@ type Match = {
 };
 export default function Home() {
   const [upcomingMatches, setUpcomingMatches] = React.useState<
-    { event: string; matches: Match[] }[]
-  >([]);
+    { event: string; matches: Match[] }[] | null
+  >(null);
   const [liveMatches, setLiveMatches] = React.useState<
-    { event: string; matches: Match[] }[]
-  >([]);
+    { event: string; matches: Match[] }[] | null
+  >(null);
 
   React.useEffect(() => {
     fetch("/api/upcoming")
       .then((res) => res.json())
       .then((data) => {
-        console.log(data)
+        console.log(data);
         setUpcomingMatches(data);
       });
   }, []);
@@ -65,10 +65,18 @@ export default function Home() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="upcoming">
-          <MatchList matches={upcomingMatches} />
+          {upcomingMatches ? (
+            <MatchList matches={upcomingMatches} />
+          ) : (
+            <span className="animate-pulse">Loading...</span>
+          )}
         </TabsContent>
         <TabsContent value="live">
-          <MatchList matches={liveMatches} isLive={true} />
+          {liveMatches ? (
+            <MatchList matches={liveMatches} isLive />
+          ) : (
+            <span className="animate-pulse">Loading...</span>
+          )}
         </TabsContent>
       </Tabs>
     </div>
@@ -117,8 +125,8 @@ function MatchList({
                         type={"upcoming"}
                         team1={match.team1}
                         team2={match.team2}
-                        team1_logo={match.team1_flag}
-                        team2_flag={match.team2_flag}
+                        // team1_logo={match.team1_flag}
+                        // team2_flag={match.team2_flag}
                         score1={match.score1}
                         score2={match.score2}
                         isLive={isLive}
@@ -177,8 +185,8 @@ function Match({
   score2,
   isLive,
   current_map,
-  team1_logo,
-  team2_flag,
+  // team1_logo,
+  // team2_flag,
   match_series,
   team1_round_ct,
   team1_round_t,
@@ -190,8 +198,8 @@ function Match({
   team2: string;
   score1: string;
   score2: string;
-  team1_logo: string;
-  team2_flag: string;
+  // team1_logo: string;
+  // team2_flag: string;
   isLive?: boolean;
   current_map?: string;
   match_series?: string;
@@ -200,13 +208,12 @@ function Match({
   team2_round_ct?: string;
   team2_round_t?: string;
 }) {
-
   return (
     <div className="flex flex-col items-center justify-between space-y-2 w-full px-4 py-2 ">
       <div className="flex flex-row items-center justify-between space-x-2 w-full ">
         <div className="flex flex-row items-center justify-center space-x-2 ">
           <Image
-            src={team1_logo||"https://owcdn.net/img/604be13d01964.png"}
+            src={"https://owcdn.net/img/604be13d01964.png"}
             alt="logo"
             width={200}
             height={200}
@@ -231,7 +238,7 @@ function Match({
       <div className="flex flex-row items-center justify-between space-x-2 w-full">
         <div className="flex flex-row items-center justify-center space-x-2">
           <Image
-            src={team2_flag||"https://owcdn.net/img/604be13d01964.png"}
+            src={"https://owcdn.net/img/604be13d01964.png"}
             alt="logo"
             width={200}
             height={200}
