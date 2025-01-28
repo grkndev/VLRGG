@@ -1,19 +1,25 @@
+import { getTeamLogo } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
+
+interface Match {
+  unix_timestamp: string;
+  team1: string;
+  team2: string;
+  team1_flag: string;
+  score1: string;
+  team2_flag: string;
+  score2: string;
+  current_map: string;
+  match_series: string;
+  team1_logo?: string; // Yeni eklenen alan
+  team2_logo?: string; // Yeni eklenen alan
+}
+
 interface EventGroup {
   event: string;
-  matches: {
-    unix_timestamp: string;
-    team1: string;
-    team2: string;
-    team1_flag: string;
-    score1: string;
-    team2_flag: string;
-    score2: string;
-    current_map: string;
-    match_series: string;
-  }[];
+  matches: Match[];
 }
 
 export async function GET() {
@@ -36,19 +42,15 @@ export async function GET() {
       groupedData.push(eventGroup);
     }
 
-    // getTeam fonksiyonlarını çağır ve sonuçları bekle
-    // const [team1icon, team2icon] = await Promise.all([
-    //   new Promise<string>((resolve) => getTeam(item.team1, resolve)),
-    //   new Promise<string>((resolve) => getTeam(item.team2, resolve)),
-    // ]);
+    // Takım logolarını ekleyelim
+    const team1Logo = await getTeamLogo(item.team1);
+    const team2Logo = await getTeamLogo(item.team2);
 
-    // Bu event grubuna maçı ekle
-    // eventGroup.matches.push({
-    //   ...item,
-    //   team1_flag: team1icon,
-    //   team2_flag: team2icon,
-    // });
-    eventGroup.matches.push(item);
+    eventGroup.matches.push({
+      ...item,
+      team1_logo: team1Logo,
+      team2_logo: team2Logo,
+    });
   }
 
   return NextResponse.json(groupedData);

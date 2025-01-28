@@ -1,3 +1,4 @@
+import { getTeamLogo } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
@@ -7,8 +8,8 @@ interface EventGroup {
     unix_timestamp: string;
     team1: string;
     team2: string;
-    // team1_flag: string;
-    // team2_flag: string;
+    team1_logo: string;
+    team2_logo: string;
     score1: string;
     score2: string;
     current_map: string;
@@ -45,13 +46,18 @@ export async function GET() {
     //   new Promise<string>((resolve) => getTeam(item.team2, resolve)),
     // ]);
 
+     // Takım logolarını ekleyelim
+     const team1Logo = await getTeamLogo(item.team1);
+     const team2Logo = await getTeamLogo(item.team2);
+
+
     // Bu event grubuna maçı ekle
     eventGroup.matches.push({
       unix_timestamp: item.unix_timestamp,
       team1: item.team1,
       team2: item.team2,
-      // team1_flag: team1icon,
-      // team2_flag: team2icon,
+      team1_logo: team1Logo,
+      team2_logo: team2Logo,
       score1: item.score1,
       score2: item.score2,
       current_map: item.current_map,

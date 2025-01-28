@@ -5,6 +5,15 @@ import Image from "next/image";
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import dayjs from "dayjs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 
 type Match = {
   unix_timestamp: string;
@@ -12,8 +21,8 @@ type Match = {
   team2: string;
   score1: string;
   score2: string;
-  // team1_flag: string;
-  // team2_flag: string;
+  team1_logo: string;
+  team2_logo: string;
   current_map?: string;
   match_series?: string;
   team1_round_ct?: string;
@@ -28,12 +37,43 @@ export default function Home() {
   const [liveMatches, setLiveMatches] = React.useState<
     { event: string; matches: Match[] }[] | null
   >(null);
+  const [selectedEvents, setSelectedEvents] = React.useState<string[]>([]);
+  const [allEvents, setAllEvents] = React.useState<string[]>([]);
+
+  // Tüm event'leri topla
+  React.useEffect(() => {
+    const events = [
+      ...Array.from(
+        new Set(
+          [...(upcomingMatches || []), ...(liveMatches || [])].map(
+            (m) => m.event
+          )
+        )
+      ),
+    ];
+    setAllEvents(events);
+    setSelectedEvents(events);
+  }, [upcomingMatches, liveMatches]);
+
+  // Filtrelenmiş maçları hesapla
+  const filteredMatches = (
+    matches: { event: string; matches: Match[] }[] | null
+  ) => {
+    if (!matches) return null;
+    return matches.filter((group) => selectedEvents.includes(group.event));
+  };
+
+  // Checkbox değişikliklerini yönet
+  const handleEventToggle = (event: string) => {
+    setSelectedEvents((prev) =>
+      prev.includes(event) ? prev.filter((e) => e !== event) : [...prev, event]
+    );
+  };
 
   React.useEffect(() => {
     fetch("/api/upcoming")
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
         setUpcomingMatches(data);
       });
   }, []);
@@ -48,7 +88,49 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-center space-y-4 p-4">
-      <Tabs defaultValue="upcoming" className="w-full">
+      {/* Filtreleme Bileşeni */}
+      <div className="w-full ">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full bg-[#3E3E3E] text-white"
+            >
+              Filter Events ({selectedEvents.length}/{allEvents.length})
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 bg-[#1e1e1e] border-[#3E3E3E]">
+            <div className="grid gap-4">
+              <div className="space-y-2">
+                <h4 className="font-medium leading-none text-white">Events</h4>
+                <p className="text-sm text-muted-foreground ">
+                  Select events to display
+                </p>
+              </div>
+              <div className="grid gap-2 max-h-60 overflow-y-auto">
+                {allEvents.map((event) => (
+                  <div key={event} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={event}
+                      checked={selectedEvents.includes(event)}
+                      onCheckedChange={() => handleEventToggle(event)}
+                      className="border-white/50 data-[state=checked]:bg-red-500"
+                    />
+                    <Label
+                      htmlFor={event}
+                      className="text-sm font-medium leading-none text-white"
+                    >
+                      {event}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      <Tabs defaultValue="upcoming" className="w-full ">
         <TabsList className="w-full bg-[#1e1e1e]">
           <TabsTrigger
             value="upcoming"
@@ -65,14 +147,14 @@ export default function Home() {
         </TabsList>
         <TabsContent value="upcoming">
           {upcomingMatches ? (
-            <MatchList matches={upcomingMatches} />
+            <MatchList matches={filteredMatches(upcomingMatches)} />
           ) : (
             <span className="animate-pulse">Loading...</span>
           )}
         </TabsContent>
         <TabsContent value="live">
           {liveMatches ? (
-            <MatchList matches={liveMatches} isLive />
+            <MatchList matches={filteredMatches(liveMatches)} isLive />
           ) : (
             <span className="animate-pulse">Loading...</span>
           )}
@@ -85,9 +167,16 @@ function MatchList({
   matches,
   isLive,
 }: {
-  matches: { event: string; matches: Match[] }[];
+  matches: { event: string; matches: Match[] }[] | null;
   isLive?: boolean;
 }) {
+  if (!matches || matches.length === 0) {
+    return (
+      <div className="w-full text-center text-white/50 py-8">
+        No matches found for selected filters
+      </div>
+    );
+  }
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 items-center justify-center gap-4 w-full">
       {matches &&
@@ -112,10 +201,10 @@ function MatchList({
 
               <ScrollArea className="flex items-center justify-center w-full h-fit">
                 <div className="flex flex-col items-center justify-center space-y-2 w-full">
-                  {event.matches.map((match: Match) => (
+                  {event.matches.map((match: Match, index: Number) => (
                     <div
                       className="w-full items-center justify-center"
-                      key={match.unix_timestamp}
+                      key={match.unix_timestamp.toString() + index.toString()}
                     >
                       <Separator
                         dateString={isLive ? "LIVE" : match.unix_timestamp}
@@ -124,8 +213,8 @@ function MatchList({
                         type={"upcoming"}
                         team1={match.team1}
                         team2={match.team2}
-                        // team1_logo={match.team1_flag}
-                        // team2_flag={match.team2_flag}
+                        team1_logo={match.team1_logo}
+                        team2_logo={match.team2_logo}
                         score1={match.score1}
                         score2={match.score2}
                         isLive={isLive}
@@ -184,8 +273,8 @@ function Match({
   score2,
   isLive,
   current_map,
-  // team1_logo,
-  // team2_flag,
+  team1_logo,
+  team2_logo,
   match_series,
   team1_round_ct,
   team1_round_t,
@@ -197,8 +286,8 @@ function Match({
   team2: string;
   score1: string;
   score2: string;
-  // team1_logo: string;
-  // team2_flag: string;
+  team1_logo: string;
+  team2_logo: string;
   isLive?: boolean;
   current_map?: string;
   match_series?: string;
@@ -212,7 +301,7 @@ function Match({
       <div className="flex flex-row items-center justify-between space-x-2 w-full ">
         <div className="flex flex-row items-center justify-center space-x-2 ">
           <Image
-            src={"https://owcdn.net/img/604be13d01964.png"}
+            src={"https:" + team1_logo}
             alt="logo"
             width={200}
             height={200}
@@ -237,7 +326,7 @@ function Match({
       <div className="flex flex-row items-center justify-between space-x-2 w-full">
         <div className="flex flex-row items-center justify-center space-x-2">
           <Image
-            src={"https://owcdn.net/img/604be13d01964.png"}
+            src={"https://" + team2_logo}
             alt="logo"
             width={200}
             height={200}
