@@ -12,8 +12,8 @@ export async function getTeamLogo(teamName: string): Promise<string> {
       `https://www.vlr.gg/search/auto/?term=${teamName}`
     );
     const data = response.data;
-
-    const filtered = data.filter((item: any) => item.type === "team");
+    //@ts-ignore
+    const filtered = data.filter((item) => item.type === "team");
     if (filtered.length > 0 && filtered[0].logo_url) {
       return filtered[0].logo_url;
     } else {

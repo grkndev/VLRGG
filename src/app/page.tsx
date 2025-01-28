@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import dayjs from "dayjs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
@@ -201,7 +200,7 @@ function MatchList({
 
               <ScrollArea className="flex items-center justify-center w-full h-fit">
                 <div className="flex flex-col items-center justify-center space-y-2 w-full">
-                  {event.matches.map((match: Match, index: Number) => (
+                  {event.matches.map((match: Match, index: number) => (
                     <div
                       className="w-full items-center justify-center"
                       key={match.unix_timestamp.toString() + index.toString()}
